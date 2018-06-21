@@ -7,7 +7,7 @@ object Dependencies {
 
   object Versions {
     val akka = "2.5.12"
-    val akkaHttp = "10.1.1"
+    val akkaHttp = "10.1.3"
 
     val scalapb = "0.7.1"
     val grpc = "1.12.0"
@@ -38,6 +38,9 @@ object Dependencies {
     val protocJar = "com.github.os72" % "protoc-jar" % "3.5.1"
 
     val plexusBuildApi = "org.sonatype.plexus" % "plexus-build-api" % "0.0.7" % "optional"// Apache v2
+
+    val play = "com.typesafe.play" %% "play" % "2.7.0-M1" // Apache M2
+    val playAkkaHttpServer = "com.typesafe.play" %% "play-akka-http-server" % "2.7.0-M1" // Apache M2
   }
 
   object Agents {
@@ -94,6 +97,15 @@ object Dependencies {
     Compile.grpcInteropTesting,
     Compile.grpcInteropTesting % "protobuf", // gets the proto files for interop tests
     Compile.akkaHttp,
+    Compile.play,
+    Compile.playAkkaHttpServer,
     Test.scalaJava8Compat
+  ) ++ testing.map(_.withConfigurations(Some("compile")))
+
+  val playInteropTest = l ++= Seq(
+    // TODO #193
+    Compile.grpcStub,
+    Compile.play,
+    Compile.playAkkaHttpServer,
   ) ++ testing.map(_.withConfigurations(Some("compile")))
 }
