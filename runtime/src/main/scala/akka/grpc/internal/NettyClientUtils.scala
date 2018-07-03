@@ -9,7 +9,8 @@ import akka.annotation.InternalApi
 import akka.grpc.GrpcClientSettings
 import io.grpc.ManagedChannel
 import io.grpc.netty.shaded.io.grpc.netty.{ GrpcSslContexts, NegotiationType, NettyChannelBuilder }
-import io.grpc.netty.shaded.io.netty.handler.ssl.SslContext
+import io.grpc.netty.shaded.io.netty.handler.ssl.{ ClientAuth, JdkSslContext, SslContext }
+import javax.net.ssl.SSLContext
 
 /**
  * INTERNAL API
@@ -27,8 +28,8 @@ object NettyClientUtils {
         .forAddress(settings.host, settings.port)
         .flowControlWindow(65 * 1024)
 
-    builder = settings.trustedCaCertificate.map(c => GrpcSslContexts.forClient.trustManager(loadCert(c)).build)
-      .map(ctx => builder.negotiationType(NegotiationType.TLS).sslContext(ctx))
+    builder = settings.sslContext
+      .map(ctx => builder.negotiationType(NegotiationType.TLS).sslContext(nettySslContext(ctx)))
       .getOrElse(builder.negotiationType(NegotiationType.PLAINTEXT))
     builder = settings.overrideAuthority
       .map(builder.overrideAuthority(_)).getOrElse(builder)
@@ -36,31 +37,7 @@ object NettyClientUtils {
     builder.build
   }
 
-  // FIXME couldn't we use the inputstream based trustManager() method instead of going via filesystem?
-  private def loadCert(name: String): File = {
-    import java.io._
-
-    val in = new BufferedInputStream(this.getClass.getResourceAsStream("/certs/" + name))
-    val inBytes: Array[Byte] = {
-      val baos = new ByteArrayOutputStream(math.max(64, in.available()))
-      val buffer = Array.ofDim[Byte](32 * 1024)
-
-      var bytesRead = in.read(buffer)
-      while (bytesRead >= 0) {
-        baos.write(buffer, 0, bytesRead)
-        bytesRead = in.read(buffer)
-      }
-      baos.toByteArray
-    }
-
-    val tmpFile = File.createTempFile(name, "")
-    tmpFile.deleteOnExit()
-
-    val out = new BufferedOutputStream(new FileOutputStream(tmpFile))
-    out.write(inBytes)
-    out.close()
-
-    tmpFile
-  }
+  private[grpc] def nettySslContext(javaSSLContext: SSLContext): SslContext =
+    new JdkSslContext(javaSSLContext, true, ClientAuth.NONE) // TODO: Check ClientAuth setting?
 
 }

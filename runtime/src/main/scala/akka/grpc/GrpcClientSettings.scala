@@ -1,23 +1,29 @@
 package akka.grpc
 
+import java.security.cert.Certificate
+
 import io.grpc.CallOptions
+import javax.net.ssl.SSLContext
 
 // TODO document properties
-final class GrpcClientSettings(
+final class GrpcClientSettings private[grpc] (
   val host: String,
   val port: Int,
   val overrideAuthority: Option[String],
   // TODO remove CallOptions here and build them ourselves inside the client
-  val options: Option[CallOptions],
-  // TODO more 'akka-http-like' way of configuring TLS
-  val trustedCaCertificate: Option[String]) {
+  val sslContext: Option[SSLContext],
+  // TODO remove CallOptions here and build them ourselves inside the client
+  val options: Option[CallOptions]) {
 
   def withOverrideAuthority(authority: String): GrpcClientSettings =
-    new GrpcClientSettings(host, port, Some(authority), options, trustedCaCertificate)
+    new GrpcClientSettings(host, port, Some(authority), sslContext, options)
+  def withSSLContext(sslContext: SSLContext): GrpcClientSettings =
+    new GrpcClientSettings(host, port, overrideAuthority, Some(sslContext), options)
   def withOptions(options: CallOptions): GrpcClientSettings =
-    new GrpcClientSettings(host, port, overrideAuthority, Some(options), trustedCaCertificate)
-  def withTrustedCaCertificate(certificate: String): GrpcClientSettings =
-    new GrpcClientSettings(host, port, overrideAuthority, options, Some(certificate))
+    new GrpcClientSettings(host, port, overrideAuthority, sslContext, Some(options))
+  @deprecated("Use withSSLContext instead", "0.2")
+  def withCertificate(certificate: String): GrpcClientSettings =
+    new GrpcClientSettings(host, port, overrideAuthority, Some(TodoSSLContextUtils.trustCert(certificate)), options)
 
 }
 
@@ -26,13 +32,14 @@ object GrpcClientSettings {
    * Scala API
    */
   def apply(host: String, port: Int): GrpcClientSettings =
-    new GrpcClientSettings(host, port, None, None, None)
+    new GrpcClientSettings(host, port, None, Option.empty[SSLContext], None)
 
   /**
    * Scala API
    */
-  def apply(host: String, port: Int, overrideAuthority: Option[String], options: Option[CallOptions], trustedCaCertificate: Option[String]): GrpcClientSettings =
-    new GrpcClientSettings(host, port, overrideAuthority, options, trustedCaCertificate)
+  @deprecated("Use withSSLContext instead", "0.2")
+  def apply(host: String, port: Int, overrideAuthority: Option[String], options: Option[CallOptions], certificate: Option[String]): GrpcClientSettings =
+    new GrpcClientSettings(host, port, overrideAuthority, certificate.map(TodoSSLContextUtils.trustCert), options)
 
   /**
    * Java API
