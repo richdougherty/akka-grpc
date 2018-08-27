@@ -18,6 +18,7 @@ object Dependencies {
     val sslConfig = "0.2.4"
 
     val scalaTest = "3.0.4"
+    val scalaTestPlusPlay = "4.0.0-M1" // TODO: Update to M2 when we update Play to M2 
     val scalaJava8Compat = "0.8.0"
 
     val maven = "3.5.3"
@@ -49,6 +50,7 @@ object Dependencies {
     val plexusBuildApi = "org.sonatype.plexus" % "plexus-build-api" % "0.0.7" % "optional"// Apache v2
 
     val play = "com.typesafe.play" %% "play" % Versions.play // Apache M2
+    val playJava = "com.typesafe.play" %% "play-java" % Versions.play // Apache M2
     val playGuice = "com.typesafe.play" %% "play-guice" % Versions.play  // Apache M2
     val playAkkaHttpServer = "com.typesafe.play" %% "play-akka-http-server" % Versions.play // Apache M2
   }
@@ -58,6 +60,10 @@ object Dependencies {
     val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % Versions.scalaJava8Compat % "test" // BSD 3-clause
     val junit = "junit" % "junit" % "4.12" % "test" // Common Public License 1.0
     val akkaDiscoveryConfig    = "com.lightbend.akka.discovery" %% "akka-discovery-config"     % Versions.akkaDiscovery % "test"
+
+    val playTest = "com.typesafe.play" %% "play-test" % Versions.play % "test" // Apache M2
+    val playSpecs2 = "com.typesafe.play" %% "play-specs2" % Versions.play % "test" // Apache M2
+    val scalaTestPlusPlay = "org.scalatestplus.play" %% "scalatestplus-play" % Versions.scalaTestPlusPlay % "test" // ApacheV2
   }
 
   object Plugins {
@@ -112,6 +118,15 @@ object Dependencies {
     addSbtPlugin(Plugins.sbtProtoc),
   )
 
+  val playTestkit = l ++= Seq(
+    Compile.play
+  ) ++ (Seq(
+    Compile.play,
+    Test.playTest,
+    Test.playSpecs2,
+    Test.scalaTestPlusPlay
+  ).map(_.withConfigurations(Some("provided"))))
+
   val interopTests = l ++= Seq(
     Compile.grpcInteropTesting,
     Compile.grpcInteropTesting % "protobuf", // gets the proto files for interop tests
@@ -126,11 +141,22 @@ object Dependencies {
     Compile.grpcStub,
   ) ++ testing
 
-  val playInteropTest = l ++= Seq(
+  val playInteropTestScala = l ++= Seq(
     // TODO #193
     Compile.grpcStub,
     Compile.play,
     Compile.playGuice,
     Compile.playAkkaHttpServer,
-  ) ++ testing.map(_.withConfigurations(Some("compile")))
+    Test.playSpecs2,
+    Test.scalaTestPlusPlay,
+  )
+
+  val playInteropTestJava = l ++= Seq(
+    // TODO #193
+    Compile.grpcStub,
+    Compile.play,
+    Compile.playGuice,
+    Compile.playAkkaHttpServer,
+    Compile.playJava,
+  )
 }
