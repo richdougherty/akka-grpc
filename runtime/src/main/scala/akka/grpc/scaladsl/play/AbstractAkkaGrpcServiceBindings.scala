@@ -26,7 +26,7 @@ abstract class AbstractAkkaGrpcServiceModule extends play.api.inject.Module {
     val enabledConfig = s"$baseConfigPath.enabled"
     val classNameConfig = s"$baseConfigPath.class"
 
-    if (!configuration.has(enabledConfig) || configuration.get[Boolean](enabledConfig)) {
+    if (!configuration.has(enabledConfig) || !configuration.get[Boolean](enabledConfig)) {
       // We support disabling service loading, since some generated services might not actually be needed
 
       logger.info(s"Service ${serviceClass.getName} not bound to an implementation class because setting '$enabledConfig' is false")
