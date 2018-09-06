@@ -29,7 +29,7 @@ abstract class AbstractAkkaGrpcServiceModule extends play.api.inject.Module {
     if (!configuration.has(enabledConfig) || configuration.get[Boolean](enabledConfig)) {
       // We support disabling service loading, since some generated services might not actually be needed
 
-      logger.info(s"Service ${serviceClass.getName} not bound to an implementation clas because setting '$enabledConfig' is false")
+      logger.info(s"Service ${serviceClass.getName} not bound to an implementation class because setting '$enabledConfig' is false")
       Seq.empty
     } else {
       // Service loading is enabled
