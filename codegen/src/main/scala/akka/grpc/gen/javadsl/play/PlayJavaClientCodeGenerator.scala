@@ -26,7 +26,7 @@ trait PlayJavaClientCodeGenerator extends JavaCodeGenerator {
 
   override def staticContent(logger: Logger, allServices: Seq[Service]): Set[CodeGeneratorResponse.File] = {
     if (allServices.nonEmpty) {
-      val packageName = packageForSharedModuleFile(allServices)
+      val packageName = Service.commonPackage(allServices)
       val b = CodeGeneratorResponse.File.newBuilder()
       b.setContent(AkkaGrpcClientModule(packageName, allServices).body)
       b.setName(s"${packageName.replace('.', '/')}/${PlayScalaClientCodeGenerator.ClientModuleName}.java")
@@ -39,6 +39,4 @@ trait PlayJavaClientCodeGenerator extends JavaCodeGenerator {
     } else Set.empty
   }
 
-  private[play] def packageForSharedModuleFile(allServices: Seq[Service]): String =
-    CodeGenerator.commonPackage(allServices.map(_.packageName))
 }
